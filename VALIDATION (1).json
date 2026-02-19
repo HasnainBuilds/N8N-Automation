@@ -1,0 +1,1290 @@
+{
+  "name": "VALIDATION",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.chatInput }}",
+        "options": {
+          "systemMessage": "You are a validation assistant. Your task is to analyze the user’s message and validate the presence of both a full name and a valid email address.\n\nRules:\n\nIf the message contains both a valid full name and a valid email address, respond with a professional confirmation message, acknowledging successful validation.\n\nIf any required information is missing, respond using the following standard template only:\n“Please fill all required fields: [missing field(s)]”\nExample:\n\n“Please fill all required fields: Name”\n\n“Please fill all required fields: Email”\n\n“Please fill all required fields: Name, Email”\n\nDo not assume, generate, or correct missing information.\n\nKeep all responses concise, clear, and professional.\n\nDo not add extra explanations, comments, or unnecessary details."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1648,
+        3856
+      ],
+      "id": "97443f82-4c43-46c9-9a70-9fb5feed4230",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1600,
+        4144
+      ],
+      "id": "762d1228-4735-4993-aa7b-954242e7ddb4",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "e1jKNGbEqr8rORTp",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        1840,
+        4160
+      ],
+      "id": "499f6b35-b42b-405a-931f-c5115ee3ab4e",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "53cef15f-c8d6-4241-a485-6cce8fa37c82",
+              "leftValue": "={{ $json.Name }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "b1297ff1-312d-4983-ad99-91eb9c806471",
+              "leftValue": "={{ $json.Email }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        416,
+        -704
+      ],
+      "id": "7cc1cef0-1953-4dc4-a9e4-e259ba89c9ec",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "092d37b1-609e-4cff-99d6-97798e7010c1",
+              "name": "",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1072,
+        3888
+      ],
+      "id": "fc007810-05ee-4e47-a74e-c05bbd5488bd",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "formTitle": "Complain Form",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Your Name"
+            },
+            {
+              "fieldLabel": "Your Email",
+              "fieldType": "email"
+            },
+            {
+              "fieldLabel": "Complain Message"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.5,
+      "position": [
+        160,
+        -704
+      ],
+      "id": "10aec067-ac99-4a8e-b42a-842794a4ec11",
+      "name": "On form submission",
+      "webhookId": "8079991c-5b97-4fd7-bb72-d525c1a3f8e2"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        432,
+        3888
+      ],
+      "id": "a0dbda34-d56b-4962-8d7f-86a6521e69b5",
+      "name": "When chat message received",
+      "webhookId": "eab319fb-4bc7-43c2-8b03-7e2e3380b07a"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.chatInput }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a helpful assistant.\nYour task is to read the text received from the previous node and extract the following three items if present:\n\nName\n\nEmail\n\nMessage\n\nInstructions:\n\nCarefully analyze the previous node’s text.\n\nExtract the name, email, and message from the text.\n\nDo not add extra explanations, comments, or assumptions.\n\nIf any value is missing, leave it empty after the colon.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        640,
+        3888
+      ],
+      "id": "27c2673d-5370-419f-b320-88846cd71787",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        512,
+        4096
+      ],
+      "id": "d17711ca-7d5e-479c-8d07-4cbf113e17a6",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "e1jKNGbEqr8rORTp",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-20b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        1168,
+        -640
+      ],
+      "id": "95a80089-0524-494a-b66c-15a155eb1ad5",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "QdevBQwPQZZ4xoZw",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        624,
+        -832
+      ],
+      "id": "ab9d3af8-f192-45c6-b99f-ab226f3474f0",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "This Pinecone vector store is connected to a dedicated Validate namespace within the database.\n\nThe namespace contains approved and verified reference records that are used strictly for data validation purposes.\n\nFor every incoming input, the system must fetch relevant vectors from this Validate namespace and compare them with the input data using semantic similarity.\n\nThe Validate decision is based only on matches found in this namespace.\n\nIf the input data confidently matches a stored record, it must be marked as VALID.\n\nIf no reliable match is found in the Validate namespace, the input must be marked as INVALID.\n\nThis vector store must not be used for content generation, guessing, or external data lookup—only for deterministic Validate.",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "ragesupport",
+          "mode": "list",
+          "cachedResultName": "ragesupport"
+        },
+        "options": {
+          "pineconeNamespace": "Validate"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        1312,
+        -576
+      ],
+      "id": "e21ac787-c085-45ad-92c6-4f9e097e489e",
+      "name": "Pinecone Vector Store",
+      "credentials": {
+        "pineconeApi": {
+          "id": "vRmFoVWCT0cILbrd",
+          "name": "PineconeApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "13UrCB1_mwLYd5z0KbawEYA9ese6USD-02XPyRczX5I0",
+          "mode": "list",
+          "cachedResultName": "Validation Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/13UrCB1_mwLYd5z0KbawEYA9ese6USD-02XPyRczX5I0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/13UrCB1_mwLYd5z0KbawEYA9ese6USD-02XPyRczX5I0/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        192,
+        -1472
+      ],
+      "id": "78a25e8d-00c9-46d7-a792-5926ffb50d6f",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "SSyAUTiZryR1jd9J",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Name :{{ $json.Name }}\nEmail : {{ $json.Email }}",
+        "options": {
+          "systemMessage": "You are a helpful assistant.\nYour task is to extract Name and Gmail address from the given user text.\n\nRules:\n\nOutput must be in exactly two separate lines\n\nDo NOT merge output into a single line\n\nDo NOT add extra text, explanation, or symbols\n\nIf Gmail is not found, leave it empty\n\nOutput format (strict):\noutput 1 = name: <name here>\noutput 2 = email: <gmail here>"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        400,
+        -1472
+      ],
+      "id": "cf983681-0c3c-4732-9433-f07d1a907c5d",
+      "name": "AI Agent3"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-safeguard-20b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        272,
+        -1264
+      ],
+      "id": "cb45c474-db7c-4d15-82d3-f99e8109c14f",
+      "name": "Groq Chat Model1",
+      "credentials": {
+        "groqApi": {
+          "id": "QdevBQwPQZZ4xoZw",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "ragesupport",
+          "mode": "list",
+          "cachedResultName": "ragesupport"
+        },
+        "options": {
+          "pineconeNamespace": "Validate"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        752,
+        -1472
+      ],
+      "id": "848a174f-cc52-4005-89de-9b60c23a95fd",
+      "name": "Pinecone Vector Store1",
+      "credentials": {
+        "pineconeApi": {
+          "id": "vRmFoVWCT0cILbrd",
+          "name": "PineconeApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "textSplittingMode": "custom",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        928,
+        -1280
+      ],
+      "id": "532c620a-bed2-4bc6-8e19-72e4e2f92454",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        1088,
+        -1104
+      ],
+      "id": "6ff4b2f7-8bb1-4f35-ba3b-27bad148da19",
+      "name": "Recursive Character Text Splitter"
+    },
+    {
+      "parameters": {
+        "modelName": "embed-english-light-v2.0"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsCohere",
+      "typeVersion": 1,
+      "position": [
+        704,
+        -1232
+      ],
+      "id": "cd97bd24-07ab-4f94-9023-8f4dc8856de8",
+      "name": "Embeddings Cohere",
+      "credentials": {
+        "cohereApi": {
+          "id": "Gy3NeAt5TKj7jys5",
+          "name": "CohereApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "embed-english-light-v2.0"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsCohere",
+      "typeVersion": 1,
+      "position": [
+        1184,
+        -448
+      ],
+      "id": "c8eed9dd-1356-4fcd-9c56-8274bf9f0ab0",
+      "name": "Embeddings Cohere1",
+      "credentials": {
+        "cohereApi": {
+          "id": "Gy3NeAt5TKj7jys5",
+          "name": "CohereApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## VALIDATION CHECK",
+        "height": 640,
+        "width": 1760
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        112,
+        -896
+      ],
+      "typeVersion": 1,
+      "id": "4447ef7d-8828-446e-a8b2-ddfe3db573ca",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## SAVING DATA IN DB",
+        "height": 576,
+        "width": 1488
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        96,
+        -1552
+      ],
+      "typeVersion": 1,
+      "id": "e46222fa-52ba-4357-9f3c-7734b1f1635e",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Name: {{ $json['Your Name'] }}\nEmail:{{ $json['Your Email'] }}",
+        "options": {
+          "systemMessage": "You are a strict data validation AI agent.\nYour responsibility is to validate incoming user data against the existing validated records stored in a Pinecone namespace (Validate)\n\nValidation Rules:\n\nRetrieve relevant vectors from the configured Pinecone namespace\n\nCompare input data with namespace data using semantic similarity\n\nTreat data as VALID only if similarity confidently matches a stored record\n\nIf no reliable match exists, mark data as INVALID\n\nDo not guess or assume validity\n\nOutput Rules (STRICT):\n\nOutput must contain only the validation result\n\nDo not add explanations, reasoning, or extra text\n\nOutput must follow the exact format below\n\nOutput Format:\nvalidation_status = VALID | INVALID\nmatched_record = YES | NO\n\nDecision Logic:\n\nIf a strong match is found in Pinecone → VALID, YES\n\nIf no match or weak similarity → INVALID, NO"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1184,
+        -816
+      ],
+      "id": "d57ea081-2851-49e4-8dcb-874de54cbb59",
+      "name": "Validation Agent"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "a807e395-2f65-4c78-95c2-eda6ac1817a5",
+              "leftValue": "={{ $json.output }}",
+              "rightValue": "=validation_status = VALID\\nmatched_record = YES",
+              "operator": {
+                "type": "string",
+                "operation": "regex"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1536,
+        -816
+      ],
+      "id": "19baebc3-f1a0-4e50-b666-22ad168b6927",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "97df8b81-a176-4450-8305-d847f9ec19d6",
+              "name": "Name",
+              "value": "={{ $json['Your Name'] }}",
+              "type": "string"
+            },
+            {
+              "id": "e79c6c11-f10e-4af8-aff5-8a7cda9e3cf2",
+              "name": "Email",
+              "value": "={{ $json['Your Email'] }}",
+              "type": "string"
+            },
+            {
+              "id": "fec18c77-323e-4fc7-a78a-1f5628cac901",
+              "name": "Complain Message",
+              "value": "={{ $json['Complain Message'] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        464,
+        -352
+      ],
+      "id": "587a308e-edd0-4268-9761-6ac699eac5f3",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Name:{{ $json.Name }}\nEmail:{{ $json.Email }}\nComplain Message :{{ $json['Complain Message'] }}",
+        "options": {
+          "systemMessage": "You are a helpful assistant.\nYour job is to fill all required fields using the provided user information.\n\nYou will be given:\n\nname\n\nemail\n\ncomplaint message\n\nYou must:\n\nAnalyze the complaint message\n\nIdentify the intent of the problem\n\nAssign an appropriate priority based on urgency and impact\n\nRules:\n\nDo not leave any field empty\n\nDo not ask questions\n\nDo not add explanations or extra text\n\nInfer intent only from the complaint message\n\nSet priority logically (HIGH / MEDIUM / LOW)\n\nIntent Guidelines (examples):\n\nPayment issue, billing error → Payment Issue\n\nLogin, access, account problem → Account Issue\n\nBug, error, system failure → Technical Issue\n\nGeneral inquiry or guidance → General Support\n\nPriority Rules:\n\nHIGH → service blocked, payment failed, urgent loss\n\nMEDIUM → feature not working but workaround exists\n\nLOW → general questions or non-urgent requests\n\nStrict Output Format:\n\nname = <name>\nemail = <email>\ncomplaint_message = <original message>\nintent = <identified intent>\npriority = HIGH | MEDIUM | LOW"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        560,
+        160
+      ],
+      "id": "324340bf-f8fc-4f1d-af3d-9b70ed62dd42",
+      "name": "AI Agent2"
+    },
+    {
+      "parameters": {
+        "options": {
+          "temperature": 0.7
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        544,
+        400
+      ],
+      "id": "a1472b1b-bc37-4caa-8b6f-a8347cb2d3a3",
+      "name": "Google Gemini Chat Model2",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "e1jKNGbEqr8rORTp",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1yD94Jd44w-Qpaw9BrDcJKF9P0lNko0n5b5FYDAKnc-0",
+          "mode": "list",
+          "cachedResultName": "Complain Log Sheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1yD94Jd44w-Qpaw9BrDcJKF9P0lNko0n5b5FYDAKnc-0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1yD94Jd44w-Qpaw9BrDcJKF9P0lNko0n5b5FYDAKnc-0/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $json.Name }}",
+            "Email": "={{ $json.Email }}",
+            "Complain Message": "={{ $json['Complain Message'] }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Complain Message",
+              "displayName": "Complain Message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1728,
+        -352
+      ],
+      "id": "baacb743-952e-4d57-a1c9-d934c6412ff0",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "SSyAUTiZryR1jd9J",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1yD94Jd44w-Qpaw9BrDcJKF9P0lNko0n5b5FYDAKnc-0",
+          "mode": "list",
+          "cachedResultName": "Complain Log Sheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1yD94Jd44w-Qpaw9BrDcJKF9P0lNko0n5b5FYDAKnc-0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1yD94Jd44w-Qpaw9BrDcJKF9P0lNko0n5b5FYDAKnc-0/edit#gid=0"
+        },
+        "options": {
+          "dataLocationOnSheet": {
+            "values": {
+              "rangeDefinition": "detectAutomatically"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        144,
+        160
+      ],
+      "id": "a68ff495-b587-4255-aebe-711828456cae",
+      "name": "Get row(s) in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "SSyAUTiZryR1jd9J",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = items.map(i => i.json);\n\n// sort by row_number\nrows.sort((a, b) => b.row_number - a.row_number);\n\n// return ONLY the latest row\nreturn [{ json: rows[0] }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        352,
+        160
+      ],
+      "id": "cbcddd6b-6cdd-4bb5-bcd1-35a2fcadd610",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "jsCode": "const text = $input.first().json.output;\n\nconst result = {};\n\ntext.split('\\n').forEach(line => {\n  const [key, ...valueParts] = line.split('=');\n  if (!key || !valueParts.length) return;\n\n  const cleanKey = key.trim();\n  const cleanValue = valueParts.join('=').trim();\n\n  result[cleanKey] = cleanValue;\n});\n\nreturn [\n  {\n    json: {\n      name: result.name || null,\n      email: result.email || null,\n      complaint_message: result.complaint_message || null,\n      intent: result.intent || null,\n      priority: result.priority || null\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        912,
+        160
+      ],
+      "id": "ff0de95d-11fa-440f-817b-395e8b9c9f32",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "inputText": "=\n{{ $('AI Agent2').item.json.output }}",
+        "categories": {
+          "categories": [
+            {
+              "category": "Finance Department"
+            },
+            {
+              "category": "Admin Department"
+            },
+            {
+              "category": "Tech Support"
+            },
+            {
+              "category": "General"
+            }
+          ]
+        },
+        "options": {
+          "multiClass": false,
+          "systemPromptTemplate": "You are a text classification AI agent.\n\nYour task is to analyze the given input text and classify it into one and only one category based on its meaning.\n\nClassification Rules:\n\nPayment, billing, charges, refund, invoice → Payment Issue\n\nLogin, signup, password, access, account problems → Account Issue\n\nBugs, errors, crashes, system failures, technical problems → Technical Issue\n\nAny other text that does not clearly match the above → General Support\n\nRules (STRICT):\n\nChoose only one category\n\nDo not ask questions\n\nDo not add explanations or extra text\n\nDo not output anything except the category\n\nNever return null or empty output\n\nStrict Output Format (ONLY THIS):\nPayment Issue | Account Issue | Technical Issue | General Support"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.textClassifier",
+      "typeVersion": 1.1,
+      "position": [
+        1504,
+        144
+      ],
+      "id": "60c13acb-d16e-4f06-bbbc-10be7fd3473e",
+      "name": "Text Classifier"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-safeguard-20b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        1424,
+        432
+      ],
+      "id": "ad647f32-c410-40d9-ac61-f116e8ae2149",
+      "name": "Groq Chat Model2",
+      "credentials": {
+        "groqApi": {
+          "id": "QdevBQwPQZZ4xoZw",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "newid578007@gmail.com",
+        "subject": "Finance Issue",
+        "emailType": "text",
+        "message": "={{ $('Email Maker').item.json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1872,
+        -16
+      ],
+      "id": "2e059aec-07a4-436d-bdc3-7363db8ec8cb",
+      "name": "Finance Department",
+      "webhookId": "795ec9a3-7564-4cea-a7f6-7ecd64b33b0c",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "RkjIhbuJpY6szG2f",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "newid578007@gmail.com",
+        "subject": "Admin Depart",
+        "emailType": "text",
+        "message": "={{ $('Email Maker').item.json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1904,
+        256
+      ],
+      "id": "6b6bb405-722a-45d9-ae13-4f7eecffdc24",
+      "name": "Admin Department",
+      "webhookId": "795ec9a3-7564-4cea-a7f6-7ecd64b33b0c",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "RkjIhbuJpY6szG2f",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "newid578007@gmail.com",
+        "subject": "Tech Support",
+        "message": "={{ $json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1872,
+        416
+      ],
+      "id": "c8f33adf-acba-4247-b21f-ad0cb61dac3e",
+      "name": "Tech Support",
+      "webhookId": "795ec9a3-7564-4cea-a7f6-7ecd64b33b0c",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "RkjIhbuJpY6szG2f",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "newid578007@gmail.com",
+        "subject": "General Alert",
+        "emailType": "text",
+        "message": "={{ $('Email Maker').item.json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2176,
+        160
+      ],
+      "id": "3af5ed1a-20ed-44cb-942b-778cac3496a3",
+      "name": "General",
+      "webhookId": "795ec9a3-7564-4cea-a7f6-7ecd64b33b0c",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "RkjIhbuJpY6szG2f",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-20b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        1088,
+        464
+      ],
+      "id": "dae5e934-31d7-4d84-9f00-681dfd418e7f",
+      "name": "Groq Chat Model3",
+      "credentials": {
+        "groqApi": {
+          "id": "QdevBQwPQZZ4xoZw",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Name:{{ $json.name }}\nEmail:{{ $json.email }}\nComplain Message:{{ $json.complaint_message }}\nIntent:{{ $json.intent }}",
+        "options": {
+          "systemMessage": "You are an AI agent responsible for generating a professional alert email for internal teams.\n\nInput Fields Provided to You:\n\nYou will receive the following input data:\n\nname\n\nemail\n\ncomplaint_message\n\nintent\n\nYour Task:\n\nUnderstand the issue using the provided input data\n\nGenerate a clear, professional alert email addressed to the relevant team based on the intent\n\nThe email must summarize the issue and include all important details\n\nTeam Mapping (use intent to decide):\n\nPayment Issue → Billing / Finance Team\n\nAccount Issue → Account / Support Team\n\nTechnical Issue → Technical / Engineering Team\n\nGeneral Support → Customer Support Team\n\nRules (STRICT):\n\nDo not ask questions\n\nDo not add explanations or meta text\n\nDo not invent facts\n\nUse only the given input data\n\nKeep the tone professional and concise\n\nGenerate a complete email (subject + body)\n\nEmail Requirements:\n\nSubject must clearly reflect the issue and intent\n\nBody must include:\n\nUser name\n\nUser email\n\nComplaint message\n\nIdentified intent\n\nEmail should sound like an internal alert / escalation message\n\nStrict Output Format:\nSubject: <email subject>\n\nBody:\n<email body>"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1120,
+        160
+      ],
+      "id": "7ac6f276-e22c-4ad0-a605-9998a1bc58d1",
+      "name": "Email Maker"
+    },
+    {
+      "parameters": {
+        "content": "## Complain Extraction And Alert To Related Department",
+        "height": 752,
+        "width": 2416
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        80,
+        -96
+      ],
+      "typeVersion": 1,
+      "id": "26561e87-0e91-4d29-828e-0f1641850b23",
+      "name": "Sticky Note2"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "AI Agent": {
+      "main": [
+        []
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Validation Agent",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        []
+      ]
+    },
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Validation Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pinecone Vector Store": {
+      "ai_tool": [
+        [
+          {
+            "node": "Validation Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "AI Agent3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent3",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pinecone Vector Store1": {
+      "ai_tool": [
+        []
+      ]
+    },
+    "AI Agent3": {
+      "main": [
+        [
+          {
+            "node": "Pinecone Vector Store1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Pinecone Vector Store1",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Cohere": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Cohere1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validation Agent": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        []
+      ]
+    },
+    "Get row(s) in sheet1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent2": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Email Maker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Classifier": {
+      "main": [
+        [
+          {
+            "node": "Finance Department",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Admin Department",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Tech Support",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "General",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Email Maker",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Maker": {
+      "main": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "96de15d5-61eb-4211-9a14-2075ddcf739f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6c168f04b59153d67bdb5ba6590c1a5616dd2e30264b0bbaa9ea1b6fdd1adcef"
+  },
+  "id": "3eDrk9YuH7mlLUeGegAXd",
+  "tags": []
+}
