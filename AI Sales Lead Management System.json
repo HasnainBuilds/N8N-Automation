@@ -1,0 +1,688 @@
+{
+  "name": "AI Sales Lead Management System",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Contact Us",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Name"
+            },
+            {
+              "fieldLabel": "Email"
+            },
+            {
+              "fieldLabel": "Scope"
+            },
+            {
+              "fieldLabel": "Budget"
+            },
+            {
+              "fieldLabel": "Time Limit"
+            },
+            {
+              "fieldLabel": "File Of Requirement",
+              "fieldType": "file"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.5,
+      "position": [
+        0,
+        0
+      ],
+      "id": "6db355d8-8d9a-46af-9b1f-3d953bdb8cfc",
+      "name": "On form submission",
+      "webhookId": "f147c090-a0a4-41c9-94ae-8b4313d45c6e"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        80,
+        208
+      ],
+      "id": "3a434f06-760f-43db-ab42-28bb4420b450",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "e1jKNGbEqr8rORTp",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        224,
+        208
+      ],
+      "id": "830060a4-5342-4abe-bca4-b2cf60d00dcf",
+      "name": "Simple Memory",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get raw text\nlet rawText = $input.first().json.output;\n\n// Convert escaped \\n into real new lines\nrawText = rawText.replace(/\\\\n/g, \"\\n\");\n\n// Split into lines\nconst lines = rawText.split(\"\\n\");\n\nlet result = {};\n\nlines.forEach(line => {\n    if (line.includes(\"=\")) {\n        const [key, value] = line.split(\"=\").map(item => item.trim());\n        result[key] = value;\n    }\n});\n\n// Return clean structured JSON\nreturn [\n  {\n    json: result\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        0
+      ],
+      "id": "aee57a00-416e-4296-95e6-b6f119d439b9",
+      "name": "Filed Extractor"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Name:{{ $json.Name }}\nEmail:{{ $json.Email }}\nScope:{{ $json.Scope }}\nDudget:{{ $json.Budget }}\nTime Limit:{{ $json['Time Limit'] }}\nFile of Requiremnet:{{ $json['File Of Requirement'] }}",
+        "options": {
+          "systemMessage": "You are an AI Sales Lead Qualification Agent.\n\nYour responsibility is to analyze incoming lead information and evaluate the business potential of the lead.\n\nInput Fields You Will Receive:\n\nname\n\nemail\n\nscope\n\nbudget\n\ntime_limit\n\nrequirement_file (optional, may contain additional details)\n\nImportant Scoring Rule for Missing Fields:\n\nIf any important field is missing, empty, or unclear, you must automatically reduce the lead score.\n\nApply scoring penalties as follows:\n\nMissing or empty budget → subtract 20 points\n\nMissing or empty time_limit → subtract 15 points\n\nMissing or vague scope → subtract 25 points\n\nNo requirement file when project seems complex → subtract 10 points\n\nIf multiple fields are missing, penalties must be cumulative.\n\nNever ignore missing information when calculating score.\n\nEvaluation Logic:\nBudget Evaluation:\n\nClearly high budget → Strong positive impact\n\nMedium budget → Moderate impact\n\nLow or unclear → Weak impact\n\nMissing → apply penalty\n\nUrgency Evaluation:\n\nImmediate / urgent → High urgency\n\nWithin 1 month → Medium urgency\n\nFlexible / not defined → Low urgency\n\nMissing → apply penalty\n\nScope Evaluation:\n\nClear and detailed requirement → Serious lead\n\nGeneric or vague → Low seriousness\n\nMissing → apply penalty\n\nLead Classification Rules:\n\nFinal Score Range:\n\n70–100 → HOT\n\n40–69 → WARM\n\n0–39 → COLD\n\nScore must always reflect:\n\nBudget strength\n\nUrgency level\n\nScope clarity\n\nField completeness\n\nStrict Rules:\n\nDo not ask questions.\n\nDo not add explanations.\n\nDo not invent information.\n\nBase decisions only on provided input.\n\nAlways return all required output fields.\n\nStrict Output Format:\nlead_score = <0-100>\nlead_category = HOT | WARM | COLD\nbudget_level = HIGH | MEDIUM | LOW | UNKNOWN\nurgency_level = HIGH | MEDIUM | LOW | UNKNOWN\nbuying_intent = STRONG | MODERATE | WEAK"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "d3b6f058-2ebf-42a1-ac2c-1bcaa28fee33",
+      "name": "AI Sales Lead Qualification Agent"
+    },
+    {
+      "parameters": {
+        "inputText": "={{ $('AI Sales Lead Qualification Agent').item.json.output }}",
+        "categories": {
+          "categories": [
+            {
+              "category": "Senior Sales Representative",
+              "description": "Send immediate email response"
+            },
+            {
+              "category": "Warm Lead",
+              "description": "Add Into Sheet of Contact And Answer"
+            },
+            {
+              "category": "Cold Lead",
+              "description": "Send to Google Sheet for Email Marketing"
+            }
+          ]
+        },
+        "options": {
+          "systemPromptTemplate": "You are a Lead Action Decision Agent.\n\nYour task is to analyze the provided lead evaluation data and decide what operational actions must be taken.\n\nInput Format:\n\nYou will receive structured text in the following format:\n\nlead_score = <number>\nlead_category = HOT | WARM | COLD\nbudget_level = HIGH | MEDIUM | LOW | UNKNOWN\nurgency_level = HIGH | MEDIUM | LOW | UNKNOWN\nbuying_intent = STRONG | MODERATE | WEAK\n\nYour Responsibility:\n\nYour decision must be based primarily on lead_category.\n\nAction Rules:\n\nIf lead_category = HOT then output:\n\nAssign to Senior Sales Representative\n\nSend immediate email response\n\nSend WhatsApp message\n\nSend calendar booking link\n\nIf lead_category = WARM then output:\n\nSend follow-up email\n\nIf lead_category = COLD then output:\n\nAdd to marketing email list\n\nStrict Rules:\n\nDo not add explanations\n\nDo not repeat input\n\nDo not modify values\n\nOnly output the action plan\n\nOutput must match exactly one of the defined action sets\n\nStrict Output Format:\n\nFor HOT:\n\nAssign to Senior Sales Representative\nSend immediate email response\nSend WhatsApp message\nSend calendar booking link\n\n\nFor WARM:\n\nSend follow-up email\n\n\nFor COLD:\n\nAdd to marketing email list\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.textClassifier",
+      "typeVersion": 1.1,
+      "position": [
+        768,
+        0
+      ],
+      "id": "6dbd1b43-d137-45cc-a0d8-ea3a5c0fff82",
+      "name": "Decision Agent"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-safeguard-20b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        704,
+        208
+      ],
+      "id": "748485cc-b39d-4e06-b270-7e7cfd9096a1",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "QdevBQwPQZZ4xoZw",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "newid578007@gmail.com",
+        "subject": "Lead Opportunity",
+        "emailType": "text",
+        "message": "={{ $('Email Alert Maker Agent').item.json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1632,
+        -352
+      ],
+      "id": "43750cb7-9490-448a-a70f-260bb3901a2f",
+      "name": "Send a message",
+      "webhookId": "802cca2d-a098-43f0-9aa6-0b0e358d264f",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "RkjIhbuJpY6szG2f",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Name:{{ $('On form submission').item.json.Name }}\nEmail:{{ $('On form submission').item.json.Email }}\nScope:{{ $('On form submission').item.json.Scope }}\nBudget:{{ $('On form submission').item.json.Budget }}\nTime Limit:{{ $('On form submission').item.json['Time Limit'] }}\n\nSales Lead Agent :\nlead_score:{{ $json.lead_score }}\nlead_category:{{ $json.lead_category }}\nbudget_level:{{ $json.budget_level }}\nurgency_level:{{ $json.urgency_level }}\nbuying_intent:{{ $json.buying_intent }}",
+        "options": {
+          "systemMessage": "You are a professional internal sales communication AI agent.\n\nYour task is to generate a structured and professional internal email to the Senior Sales Representative regarding a new qualified lead.\n\nInput Fields From Lead Form:\n\nname\n\nemail\n\nscope\n\nbudget\n\ntimeline\n\nInput Fields From Sales Lead Agent:\n\nlead_score\n\nlead_category\n\nbudget_level\n\nurgency_level\n\nbuying_intent\n\nYour Responsibilities:\n\nGenerate a professional internal alert email.\n\nUse the exact subject line:\nSubject: Lead Opportunity\n\nIn the email body:\n\nFirst, present the customer information in a clear and professional summary format.\n\nThen, present the AI lead evaluation results in a structured format.\n\nMaintain a clean corporate tone.\n\nDo not add explanations or extra commentary.\n\nDo not invent any missing data.\n\nUse only the provided input fields.\n\nEmail Structure Requirements:\nSubject:\n\nLead Opportunity\n\nBody Format:\n\nStart with a professional introduction:\n\nA new lead has been qualified and requires your attention.\n\nThen show:\n\nLead Information:\n\nName:\n\nEmail:\n\nProject Scope:\n\nBudget:\n\nTimeline:\n\nWrite this as a professional summary paragraph as well.\n\nThen show:\n\nLead Evaluation Summary:\n\nLead Score:\n\nLead Category:\n\nBudget Level:\n\nUrgency Level:\n\nBuying Intent:\n\nEnd with a short professional closing line encouraging prompt follow-up.\n\nStrict Output Format:\nSubject: Lead Opportunity\n\nBody:\n<Professional formatted email content>\n\n🔥 Example Output Style (For Your Understanding)\n\nSubject: Lead Opportunity\n\nBody:\n\nA new lead has been qualified and requires your attention.\n\nLead Information:\nName: Ahmad Raza\nEmail: ahmad@company.com\n\nProject Scope: CRM automation for sales team\nBudget: 5000 USD\nTimeline: 2 weeks\n\nAhmad Raza is seeking CRM automation for his sales operations with a defined budget and timeline, indicating a structured business requirement.\n\nLead Evaluation Summary:\nLead Score: 82\nLead Category: HOT\nBudget Level: HIGH\nUrgency Level: HIGH\nBuying Intent: STRONG\n\nPlease prioritize follow-up accordingly."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1088,
+        -352
+      ],
+      "id": "b0a15aa8-a34f-4c55-b8fc-d3577bf42719",
+      "name": "Email Alert Maker Agent"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-20b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        1088,
+        -176
+      ],
+      "id": "3ce69538-d8db-4922-94ad-4c39b1576682",
+      "name": "Groq Chat Model1",
+      "credentials": {
+        "groqApi": {
+          "id": "QdevBQwPQZZ4xoZw",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1yBBiO_NLB_vyhbwgFwU6qOKR2YkD6tpyRptU_hhBDA4",
+          "mode": "list",
+          "cachedResultName": "Leads Recived",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1yBBiO_NLB_vyhbwgFwU6qOKR2YkD6tpyRptU_hhBDA4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1yBBiO_NLB_vyhbwgFwU6qOKR2YkD6tpyRptU_hhBDA4/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $('On form submission').item.json.Name }}",
+            "Email": "={{ $('On form submission').item.json.Email }}",
+            "Scope": "={{ $('On form submission').item.json.Scope }}",
+            "Budget": "={{ $('On form submission').item.json.Budget }}",
+            "Time Line": "={{ $('On form submission').item.json['Time Limit'] }}",
+            "Lead Score by Agent": "={{ $('Decision Agent').item.json.lead_score }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Scope",
+              "displayName": "Scope",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Budget",
+              "displayName": "Budget",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Time Line",
+              "displayName": "Time Line",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Lead Score by Agent",
+              "displayName": "Lead Score by Agent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1440,
+        -352
+      ],
+      "id": "94705ada-34a6-47d3-8c02-a07931daade7",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "SSyAUTiZryR1jd9J",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1ysYyGCqBs15p_w9qERmDl2hC8TfN97_qjmfSfATjU8o",
+          "mode": "list",
+          "cachedResultName": "Email Marketing Sheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ysYyGCqBs15p_w9qERmDl2hC8TfN97_qjmfSfATjU8o/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ysYyGCqBs15p_w9qERmDl2hC8TfN97_qjmfSfATjU8o/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $('On form submission').item.json.Name }}",
+            "Email": "={{ $('On form submission').item.json.Email }}"
+          },
+          "matchingColumns": [
+            "Name"
+          ],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1120,
+        224
+      ],
+      "id": "e5ba9716-1ecc-4219-bacd-87739477fc9e",
+      "name": "Append row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "SSyAUTiZryR1jd9J",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "18outOltUWbTkgHRuM0KjB1Hwst2tPtJK",
+          "mode": "list",
+          "cachedResultName": "News Latter .pdf",
+          "cachedResultUrl": "https://drive.google.com/file/d/18outOltUWbTkgHRuM0KjB1Hwst2tPtJK/view?usp=drivesdk"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1120,
+        0
+      ],
+      "id": "395eab21-173f-4f98-8642-2dcf79357b57",
+      "name": "Download file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "CohmhV5MSqbHZLE5",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        1376,
+        0
+      ],
+      "id": "b3f6d71c-45cd-4f58-86cc-a762d3a9123a",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Name :{{ $('On form submission').item.json.Name }}\nEmail:{{ $('On form submission').item.json.Email }}\nNewsLatter :{{ $json.text }}\n",
+        "options": {
+          "systemMessage": "=You are a Newsletter Personalization Agent.\n\nYour task is to personalize a newsletter using the provided input fields.\n\nInput Fields:\n\nname\n\nemail\n\nnewsletter\n\nYour Responsibilities:\n\nInsert the customer's name naturally in the greeting.\n\nMention the customer's email once in the introduction section.\n\nKeep the original newsletter structure unchanged.\n\nDo not remove or rewrite service descriptions.\n\nDo not change pricing details.\n\nDo not add new content.\n\nOnly personalize using the provided name and email.\n\nPersonalization Rules:\n\nGreeting must start with:\nDear {name},\n\nIn the first paragraph, include a sentence like:\n\"Thank you for connecting with us using {email}.\"\n\nReplace any placeholders like:\n\n{{name}}\n\n{{email}}\n\nIf placeholders do not exist, insert personalization naturally without breaking formatting.\n\nStrict Rules:\n\nDo not explain anything.\n\nDo not output input fields separately.\n\nOnly output the final personalized newsletter.\n\nKeep formatting clean and professional.\n\n🔥 Example\nInput:\nname: Ahmad Raza\nemail: ahmad@gmail.com\nnewsletter: Dear {{name}}, Welcome to our services...\n\nOutput:\nDear Ahmad Raza,\n\nThank you for connecting with us using ahmad@gmail.com.\n\nWelcome to our services...\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1584,
+        0
+      ],
+      "id": "4729cf65-e3d3-483a-bd58-ab361e62de8c",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1456,
+        208
+      ],
+      "id": "eb9925fb-bc08-4d41-866b-f8dc15e5df0e",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "e1jKNGbEqr8rORTp",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('On form submission').item.json.Email }}",
+        "subject": "Exclusive Opportunity",
+        "emailType": "text",
+        "message": "={{ $json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1936,
+        0
+      ],
+      "id": "0fc75a9b-90fc-4fc8-8f5e-5b2fcf37cada",
+      "name": "Send a message1",
+      "webhookId": "599951c1-15cd-4bae-bd51-a37527abb355",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "RkjIhbuJpY6szG2f",
+          "name": "Gmail account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Filed Extractor": [
+      {
+        "json": {
+          "lead_score": "50",
+          "lead_category": "WARM",
+          "budget_level": "LOW",
+          "urgency_level": "MEDIUM",
+          "buying_intent": "MODERATE"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "AI Sales Lead Qualification Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Sales Lead Qualification Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Sales Lead Qualification Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filed Extractor": {
+      "main": [
+        [
+          {
+            "node": "Decision Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Sales Lead Qualification Agent": {
+      "main": [
+        [
+          {
+            "node": "Filed Extractor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Decision Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Decision Agent": {
+      "main": [
+        [
+          {
+            "node": "Email Alert Maker Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Append row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Email Alert Maker Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Alert Maker Agent": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "38429642-8a81-4060-bc4c-13125c57d10f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6c168f04b59153d67bdb5ba6590c1a5616dd2e30264b0bbaa9ea1b6fdd1adcef"
+  },
+  "id": "6p7L5qtV2oOD96cwHLvwL",
+  "tags": []
+}
