@@ -1,0 +1,319 @@
+{
+  "name": "LINKEDIN POST CREATOR",
+  "nodes": [
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1MAEVO9WYAOGdwThsDGjaBl_z_ULUm9cz5QRcnNxM_EY",
+          "mode": "list",
+          "cachedResultName": "LINKEDIN POSTS",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MAEVO9WYAOGdwThsDGjaBl_z_ULUm9cz5QRcnNxM_EY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MAEVO9WYAOGdwThsDGjaBl_z_ULUm9cz5QRcnNxM_EY/edit#gid=0"
+        },
+        "options": {
+          "dataLocationOnSheet": {
+            "values": {
+              "rangeDefinition": "specifyRange",
+              "firstDataRow": 3
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        240,
+        0
+      ],
+      "id": "a5e0f50e-da5a-45d0-83f4-f8bd8aca3b50",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "SSyAUTiZryR1jd9J",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 4
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        80,
+        0
+      ],
+      "id": "a0c6485c-8946-47a8-99c8-89679c947ea6",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Title :{{ $json.Title }}\nDiscription :{{ $json.Discription }}",
+        "options": {
+          "systemMessage": "You are a professional LinkedIn content writer and personal brand strategist.\n\nYour task:\n- Rewrite the given content into a high-quality LinkedIn post.\n- The tone must be professional, confident, and engaging.\n- The post should look native to LinkedIn.\n\nFormatting Rules (VERY IMPORTANT):\n1. Start with a strong hook (1–2 lines).\n2. Use short paragraphs (max 2 lines each).\n3. Add clear section headings.\n4. Headings must be bold.\n5. Use relevant emojis (max 1–2 per section).\n6. Use bullet points where helpful.\n7. Add spacing between sections.\n8. End with a thoughtful call-to-action.\n9. Do NOT use markdown symbols like ### or ** — use plain text bold style instead.\n10. Do NOT add hashtags unless explicitly asked.\n\nOutput must be:\n- Clean\n- Skimmable\n- Professional\n- Ready to post on LinkedIn"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        656,
+        0
+      ],
+      "id": "25bb366d-a8d0-45ba-a23a-8c68954de731",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        528,
+        208
+      ],
+      "id": "7b4a9d2d-c621-42ed-8469-74b3e0c9b0cc",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "e1jKNGbEqr8rORTp",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "person": "fRZZzOYcZE",
+        "text": "={{ $json.Content }}",
+        "additionalFields": {
+          "visibility": "PUBLIC"
+        }
+      },
+      "type": "n8n-nodes-base.linkedIn",
+      "typeVersion": 1,
+      "position": [
+        1312,
+        112
+      ],
+      "id": "a8a1dfc9-a8ed-4d67-8771-cab3a2b59c6a",
+      "name": "Create a post",
+      "credentials": {
+        "linkedInOAuth2Api": {
+          "id": "hoE8OwpS0QMnX45g",
+          "name": "LinkedIn account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "sendTo": "meharhasnain93@gmail.com",
+        "subject": "Approval Required",
+        "message": "={{ $json.output }}",
+        "responseType": "customForm",
+        "defineForm": "json",
+        "jsonOutput": "[\n  {\n    \"fieldLabel\": \"Name\",\n    \"placeholder\": \"enter your name\",\n    \"requiredField\": true\n  },\n  {\n    \"fieldLabel\": \"File\",\n    \"fieldType\": \"file\",\n    \"multipleFiles\": true,\n    \"acceptFileTypes\": \".jpg, .png\"\n  }\n]\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        976,
+        -96
+      ],
+      "id": "e4236fc0-807a-4f6a-a174-b33e48f05fe2",
+      "name": "Request for Image",
+      "webhookId": "99c80ada-b7e6-4f59-b9a0-c668c97d011e",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "RkjIhbuJpY6szG2f",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8f4063b5-5831-439c-9afc-d10bfd0a2bfe",
+              "name": "Content",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        976,
+        112
+      ],
+      "id": "cbfd4778-0d71-4ab4-afa5-3437433e9f08",
+      "name": "Formating"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "62ea615c-3d44-4da8-af1c-efb2f8310c98",
+              "name": "Title",
+              "value": "={{ $json.TITLE }}",
+              "type": "string"
+            },
+            {
+              "id": "41916b38-af8e-4825-8871-f9890cf3e9a2",
+              "name": "Discription",
+              "value": "={{ $json.DISCRIPTION }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        448,
+        0
+      ],
+      "id": "55164d85-8df2-4a47-9436-2374e7fc41a4",
+      "name": "Text Extraction"
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        1520,
+        112
+      ],
+      "id": "9f02ef37-5aa1-4790-91fc-f12b1bc387ee",
+      "name": "Send message",
+      "webhookId": "bc8886d8-f762-4c29-a5ec-8e216cadaf97"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Text Extraction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Request for Image",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Formating",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Request for Image": {
+      "main": [
+        []
+      ]
+    },
+    "Formating": {
+      "main": [
+        [
+          {
+            "node": "Create a post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Extraction": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a post": {
+      "main": [
+        [
+          {
+            "node": "Send message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "d392fd8c-e3e2-4ddd-aec6-f446ce1c23bd",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6c168f04b59153d67bdb5ba6590c1a5616dd2e30264b0bbaa9ea1b6fdd1adcef"
+  },
+  "id": "iZh7BQa5f1UfLwAzDbl3j",
+  "tags": []
+}
